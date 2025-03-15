@@ -34,7 +34,14 @@ dependencies {
 
 	// tests
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	testImplementation("org.springframework.boot:spring-boot-testcontainers")
 	testImplementation("io.projectreactor:reactor-test")
+
+	implementation("org.testcontainers:testcontainers-bom:1.20.6")
+	testImplementation("org.testcontainers:r2dbc")
+	testImplementation("org.testcontainers:junit-jupiter")
+	testImplementation("org.testcontainers:postgresql")
+
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
