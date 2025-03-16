@@ -240,7 +240,7 @@ class UserControllerTest {
     }
 
     @Test
-    void test_get_user__not_found() {
+    void test_get_user__not_found_error() {
         Long nonExistentId = 10L;
 
         webTestClient.get().uri("/users/%s".formatted(nonExistentId))

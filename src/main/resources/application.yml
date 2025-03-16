@@ -7,3 +7,4 @@ spring:
     url: jdbc:postgresql://localhost:5432/bookstore
     user: test
     password: test
+    contexts: dev
