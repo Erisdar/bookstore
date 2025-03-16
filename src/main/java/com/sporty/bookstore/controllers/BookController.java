@@ -3,7 +3,7 @@ package com.sporty.bookstore.controllers;
 import com.sporty.bookstore.dtos.BookData;
 import com.sporty.bookstore.dtos.BookUpdate;
 import com.sporty.bookstore.entities.Book;
-import com.sporty.bookstore.exceptions.BookNotFoundException;
+import com.sporty.bookstore.exceptions.types.BookNotFoundException;
 import com.sporty.bookstore.mappers.BookMapper;
 import com.sporty.bookstore.repositories.BookRepository;
 import jakarta.validation.Valid;

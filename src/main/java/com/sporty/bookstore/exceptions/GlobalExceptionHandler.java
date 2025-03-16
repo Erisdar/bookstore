@@ -1,5 +1,7 @@
 package com.sporty.bookstore.exceptions;
 
+import com.sporty.bookstore.exceptions.types.BadRequestException;
+import com.sporty.bookstore.exceptions.types.NotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -18,6 +20,12 @@ public class GlobalExceptionHandler {
         return new ErrorResponse(ex.getMessage());
     }
 
+    @ExceptionHandler(BadRequestException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleBadRequestException(BadRequestException ex) {
+        return new ErrorResponse(ex.getMessage());
+    }
+
     @ExceptionHandler(ServerWebInputException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleServerWebInputException(ServerWebInputException ex) {
@@ -28,10 +36,10 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleException(WebExchangeBindException e) {
         List<FieldError> errors = e.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(fieldError -> new FieldError(fieldError.getField(), fieldError.getDefaultMessage()))
-                .toList();
+            .getFieldErrors()
+            .stream()
+            .map(fieldError -> new FieldError(fieldError.getField(), fieldError.getDefaultMessage()))
+            .toList();
 
         String message = "Validation failed for one or more fields";
 

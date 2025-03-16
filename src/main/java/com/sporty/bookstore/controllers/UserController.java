@@ -3,7 +3,7 @@ package com.sporty.bookstore.controllers;
 import com.sporty.bookstore.dtos.AddBalance;
 import com.sporty.bookstore.dtos.UserData;
 import com.sporty.bookstore.entities.User;
-import com.sporty.bookstore.exceptions.UserNotFoundException;
+import com.sporty.bookstore.exceptions.types.UserNotFoundException;
 import com.sporty.bookstore.mappers.UserMapper;
 import com.sporty.bookstore.repositories.UserRepository;
 import jakarta.validation.Valid;

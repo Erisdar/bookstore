@@ -1,4 +1,4 @@
-package com.sporty.bookstore.exceptions;
+package com.sporty.bookstore.exceptions.types;
 
 public class UserNotFoundException extends NotFoundException {
     public UserNotFoundException(Long id) {
