@@ -20,7 +20,9 @@ import com.sporty.bookstore.utils.DiscountUtil;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -40,7 +42,9 @@ public class OrderService {
 
     @Transactional
     public Mono<Order> createOrder(Mono<OrderDetails> orderDetails) {
-        return this.getOrderPriceInfo(orderDetails)
+        Mono<OrderDetails> cachedOrderDetails = orderDetails.cache();
+        return this.getOrderPriceInfo(cachedOrderDetails)
+            .zipWith(cachedOrderDetails)
             .flatMap(this::deductUserBalance)
             .flatMap(this::saveOrderWithItems);
     }
@@ -102,18 +106,28 @@ public class OrderService {
             .map(Book::getType)
             .orElse(null);
 
+        if (loyaltyBookType == null && orderDetails.loyaltyBookId() != null) {
+            return Mono.error(new BookNotFoundException(orderDetails.loyaltyBookId()));
+        }
+
         if (BookType.NEW_RELEASES.equals(loyaltyBookType)) {
             return Mono.error(new LoyaltyNotAcceptableException(BookType.NEW_RELEASES));
         }
         return Mono.just(booksMap);
     }
 
-    private Mono<OrderPriceInfo> deductUserBalance(OrderPriceInfo orderPriceInfo) {
+    private Mono<OrderPriceInfo> deductUserBalance(Tuple2<OrderPriceInfo, OrderDetails> orderInfoTuple) {
+        var orderPriceInfo = orderInfoTuple.getT1();
+        var orderDetails = orderInfoTuple.getT2();
+
         return userRepository.findById(orderPriceInfo.userId())
             .switchIfEmpty(Mono.error(new UserNotFoundException(orderPriceInfo.userId())))
             .flatMap(user -> {
                 if (user.getBalance().compareTo(orderPriceInfo.totalPrice()) < 0) {
                     return Mono.error(new InsufficientBalanceException());
+                }
+                if (orderDetails.loyaltyBookId() != null && user.getLoyalty() >= 10) {
+                    user.setLoyalty(0);
                 }
                 user.setBalance(user.getBalance().subtract(orderPriceInfo.totalPrice()));
                 return userRepository.save(user)
@@ -162,4 +176,20 @@ public class OrderService {
 
         return new BookPriceItem(book.getId(), DiscountUtil.applyDiscount(book.getPrice(), discount), discount.doubleValue());
     }
+
+    public Flux<Order> findAll() {
+        return orderRepository.findAll()
+            .flatMap(order ->
+                getOrderItems(order).collectList()
+                    .map(items -> {
+                        order.setOrderItems(items);
+                        return order;
+                    }));
+    }
+
+    private Flux<OrderItem> getOrderItems(Order order) {
+        return orderItemRepository.findAllByOrderId(order.getId());
+
+    }
+
 }

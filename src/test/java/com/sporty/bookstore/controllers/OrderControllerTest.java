@@ -364,25 +364,31 @@ public class OrderControllerTest {
             .add(expectedNewReleasesPrice)
             .setScale(2, RoundingMode.HALF_UP);
 
-        webTestClient.post().uri("/orders")
+        var createdOrder = webTestClient.post().uri("/orders")
             .bodyValue(orderDetails)
             .exchange()
             .expectStatus().isCreated()
             .expectBody(Order.class)
-            .value(createdOrder -> {
-                assertThat(createdOrder.getUserId()).isEqualTo(user.getId());
-                assertThat(createdOrder.getTotalPrice()).isEqualTo(totalPrice);
-                assertThat(createdOrder.getOrderItems())
-                    .hasSize(3)
-                    .extracting("orderId", "bookId", "price")
-                    .containsExactlyInAnyOrderElementsOf(
-                        List.of(
-                            tuple(createdOrder.getId(), newReleaseBook.getId(), expectedNewReleasesPrice),
-                            tuple(createdOrder.getId(), oldEditionBook.getId(), expectedOldEditionPrice),
-                            tuple(createdOrder.getId(), regularBook.getId(), expectedRegularPrice)
-                        )
-                    );
-            });
+            .returnResult()
+            .getResponseBody();
+
+        assertThat(createdOrder).isNotNull();
+        var orders = getOrders();
+
+        assertThat(orders).hasSize(1);
+        assertThat(createdOrder.getUserId()).isEqualTo(user.getId());
+        assertThat(createdOrder.getTotalPrice()).isEqualTo(totalPrice);
+        assertThat(createdOrder.getOrderItems())
+            .hasSize(3)
+            .extracting("orderId", "bookId", "price")
+            .containsExactlyInAnyOrderElementsOf(
+                List.of(
+                    tuple(createdOrder.getId(), newReleaseBook.getId(), expectedNewReleasesPrice),
+                    tuple(createdOrder.getId(), oldEditionBook.getId(), expectedOldEditionPrice),
+                    tuple(createdOrder.getId(), regularBook.getId(), expectedRegularPrice)
+                )
+            );
+        assertThat(orders.getFirst()).isEqualTo(createdOrder);
     }
 
     @Test
@@ -414,8 +420,135 @@ public class OrderControllerTest {
             .expectBody(Order.class);
 
         User updatedUser = getUser(user.getId());
+        var orders = getOrders();
 
+        assertThat(orders).hasSize(1);
         assertThat(updatedUser.getBalance()).isEqualTo(user.getBalance().subtract(totalPrice));
+    }
+
+    @Test
+    void test_create_order_with_loyalty__reset_loyalty() {
+        OrderDetails orderDetails = new OrderDetails(
+            user.getId(),
+            regularBook.getId(),
+            List.of(
+                new BookItem(regularBook.getId(), 1)
+            )
+        );
+
+        addUserLoyalty(user.getId());
+
+        webTestClient.post().uri("/orders")
+            .bodyValue(orderDetails)
+            .exchange()
+            .expectStatus().isCreated()
+            .expectBody(Order.class);
+
+        var updatedUser = getUser(user.getId());
+        var orders = getOrders();
+
+        assertThat(orders).hasSize(1);
+        assertThat(updatedUser.getBalance()).isEqualTo(user.getBalance());
+        assertThat(updatedUser.getLoyalty()).isEqualTo(0);
+    }
+
+    @Test
+    void test_create_order_with_new_releases_loyalty__bad_request_error() {
+        OrderDetails orderDetails = new OrderDetails(
+            user.getId(),
+            newReleaseBook.getId(),
+            List.of(
+                new BookItem(newReleaseBook.getId(), 1)
+            )
+        );
+
+        addUserLoyalty(user.getId());
+
+        webTestClient.post().uri("/orders")
+            .bodyValue(orderDetails)
+            .exchange()
+            .expectStatus().isBadRequest()
+            .expectBody(ErrorResponse.class)
+            .value(errorResponse -> {
+                assertThat(errorResponse.message()).isEqualTo("Loyalty discount cannot be applied to books of type: NEW_RELEASES");
+            });
+
+        var updatedUser = getUser(user.getId());
+        var orders = getOrders();
+
+        assertThat(orders).isEmpty();
+        assertThat(updatedUser.getBalance()).isEqualTo(user.getBalance());
+    }
+
+    @Test
+    void test_create_order_with_insufficient_loyalty__bad_request_error() {
+        OrderDetails orderDetails = new OrderDetails(
+            user.getId(),
+            newReleaseBook.getId(),
+            List.of(
+                new BookItem(newReleaseBook.getId(), 1)
+            )
+        );
+
+        webTestClient.post().uri("/orders")
+            .bodyValue(orderDetails)
+            .exchange()
+            .expectStatus().isBadRequest()
+            .expectBody(ErrorResponse.class)
+            .value(errorResponse -> {
+                assertThat(errorResponse.message()).isEqualTo("User has insufficient loyalty: 0");
+            });
+
+        var updatedUser = getUser(user.getId());
+        var orders = getOrders();
+
+        assertThat(orders).isEmpty();
+        assertThat(updatedUser.getBalance()).isEqualTo(user.getBalance());
+        assertThat(updatedUser.getLoyalty()).isEqualTo(0);
+    }
+
+    @Test
+    void test_get_orders__success() {
+        OrderDetails orderDetails = new OrderDetails(
+            user.getId(),
+            null,
+            List.of(
+                new BookItem(newReleaseBook.getId(), 1),
+                new BookItem(oldEditionBook.getId(), 1),
+                new BookItem(regularBook.getId(), 1)
+            )
+        );
+        createOrder(orderDetails);
+
+        BigDecimal expectedRegularPrice = getDiscountedPrice(regularBook, 0.9);
+        BigDecimal expectedOldEditionPrice = getDiscountedPrice(oldEditionBook, 0.75);
+        BigDecimal expectedNewReleasesPrice = newReleaseBook.getPrice();
+
+        BigDecimal totalPrice = BigDecimal.ZERO
+            .add(expectedOldEditionPrice)
+            .add(expectedRegularPrice)
+            .add(expectedNewReleasesPrice)
+            .setScale(2, RoundingMode.HALF_UP);
+
+        webTestClient.get().uri("/orders")
+            .exchange()
+            .expectStatus().isOk()
+            .expectBodyList(Order.class)
+            .hasSize(1)
+            .value(orders -> {
+                assertThat(orders.getFirst().getUserId()).isEqualTo(user.getId());
+                assertThat(orders.getFirst().getTotalPrice()).isEqualTo(totalPrice);
+                assertThat(orders.getFirst().getOrderItems())
+                    .hasSize(3)
+                    .extracting("orderId", "bookId", "price")
+                    .containsExactlyInAnyOrderElementsOf(
+                        List.of(
+                            tuple(orders.getFirst().getId(), newReleaseBook.getId(), expectedNewReleasesPrice),
+                            tuple(orders.getFirst().getId(), oldEditionBook.getId(), expectedOldEditionPrice),
+                            tuple(orders.getFirst().getId(), regularBook.getId(), expectedRegularPrice)
+                        )
+                    );
+            });
     }
 
     private BigDecimal getDiscountedPrice(Book book, double discount) {
@@ -437,6 +570,25 @@ public class OrderControllerTest {
             .exchange()
             .expectStatus().isCreated()
             .expectBody(Book.class)
+            .returnResult()
+            .getResponseBody();
+    }
+
+    private List<Order> getOrders() {
+        return webTestClient.get().uri("/orders")
+            .exchange()
+            .expectStatus().isOk()
+            .expectBodyList(Order.class)
+            .returnResult()
+            .getResponseBody();
+    }
+
+    private Order createOrder(OrderDetails orderDetails) {
+        return webTestClient.post().uri("/orders")
+            .bodyValue(orderDetails)
+            .exchange()
+            .expectStatus().isCreated()
+            .expectBody(Order.class)
             .returnResult()
             .getResponseBody();
     }
