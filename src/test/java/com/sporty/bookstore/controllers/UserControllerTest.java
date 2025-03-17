@@ -253,24 +253,6 @@ class UserControllerTest {
             });
     }
 
-    @Test
-    void test_delete_user__success() {
-        User createdUser = this.createUser(TEST_USER);
-
-        webTestClient.delete().uri("/users/%s".formatted(createdUser.getId()))
-            .exchange()
-            .expectStatus().isNoContent();
-
-        webTestClient.get().uri("/users/%s".formatted(createdUser.getId()))
-            .exchange()
-            .expectStatus().isNotFound()
-            .expectBody(ErrorResponse.class)
-            .value(errorResponse -> {
-                assertThat(errorResponse.message()).isEqualTo("User with id %d is not found".formatted(createdUser.getId()));
-                assertThat(errorResponse.errors()).isEmpty();
-            });
-    }
-
     private User createUser(UserData userData) {
         return webTestClient.post().uri("/users")
             .bodyValue(userData)

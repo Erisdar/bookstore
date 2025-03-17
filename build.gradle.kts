@@ -22,25 +22,25 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
 
-	implementation("io.r2dbc:r2dbc-postgresql:0.8.13.RELEASE")
-	implementation("org.liquibase:liquibase-core")
-	implementation("org.postgresql:postgresql:42.7.5")
-
 	implementation("org.mapstruct:mapstruct:1.6.3")
+	implementation("org.liquibase:liquibase-core")
+	implementation("org.springframework:spring-jdbc")
+	implementation("org.postgresql:r2dbc-postgresql")
 
 	compileOnly("org.projectlombok:lombok:1.18.36")
+
+	runtimeOnly("org.postgresql:postgresql")
+
 	annotationProcessor("org.projectlombok:lombok:1.18.36")
 	annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
 
-	// tests
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.boot:spring-boot-testcontainers")
 	testImplementation("io.projectreactor:reactor-test")
-
-	implementation("org.testcontainers:testcontainers-bom:1.20.6")
-	testImplementation("org.testcontainers:r2dbc")
+	testImplementation("io.projectreactor:reactor-test")
 	testImplementation("org.testcontainers:junit-jupiter")
 	testImplementation("org.testcontainers:postgresql")
+	testImplementation("org.testcontainers:r2dbc")
 
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

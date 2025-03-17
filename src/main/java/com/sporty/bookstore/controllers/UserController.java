@@ -50,12 +50,4 @@ public class UserController {
             }))
             .flatMap(userRepository::save);
     }
-
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Mono<Void> deleteUser(@PathVariable Long id) {
-        return userRepository.findById(id)
-            .switchIfEmpty(Mono.error(new UserNotFoundException(id)))
-            .flatMap(user -> userRepository.deleteById(user.getId()));
-    }
 }

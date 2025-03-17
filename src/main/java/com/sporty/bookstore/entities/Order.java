@@ -11,6 +11,7 @@ import java.util.List;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
+@NoArgsConstructor
 @RequiredArgsConstructor
 @Table("orders")
 public class Order extends BaseEntity {

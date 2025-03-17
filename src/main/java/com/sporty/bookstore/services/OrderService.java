@@ -16,6 +16,7 @@ import com.sporty.bookstore.repositories.BookRepository;
 import com.sporty.bookstore.repositories.OrderItemRepository;
 import com.sporty.bookstore.repositories.OrderRepository;
 import com.sporty.bookstore.repositories.UserRepository;
+import com.sporty.bookstore.utils.DiscountUtil;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,11 +37,6 @@ public class OrderService {
     private final BookRepository bookRepository;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
-
-    private static final int BUNDLE_SIZE = 3;
-    private static final BigDecimal REGULAR_BUNDLE_DISCOUNT = BigDecimal.valueOf(0.9);
-    private static final BigDecimal OLD_EDITION_DISCOUNT = BigDecimal.valueOf(0.8);
-    private static final BigDecimal OLD_EDITION_BUNDLE_DISCOUNT = BigDecimal.valueOf(0.75);
 
     @Transactional
     public Mono<Order> createOrder(Mono<OrderDetails> orderDetails) {
@@ -161,21 +157,9 @@ public class OrderService {
         int bundleSize = bookQuantitityMap.values().stream()
             .mapToInt(Integer::intValue)
             .sum();
-        boolean isBundle = bundleSize >= BUNDLE_SIZE;
 
-        return switch (book.getType()) {
-            case NEW_RELEASES -> new BookPriceItem(book.getId(), book.getPrice(), 0);
-            case REGULAR -> isBundle
-                ? new BookPriceItem(book.getId(), book.getPrice().multiply(REGULAR_BUNDLE_DISCOUNT), this.discountPercent(REGULAR_BUNDLE_DISCOUNT))
-                : new BookPriceItem(book.getId(), book.getPrice(), 0);
-            case OLD_EDITIONS -> {
-                var discount = isBundle ? OLD_EDITION_BUNDLE_DISCOUNT : OLD_EDITION_DISCOUNT;
-                yield new BookPriceItem(book.getId(), book.getPrice().multiply(discount), this.discountPercent(discount));
-            }
-        };
-    }
+        var discount = DiscountUtil.getDiscount(book, bundleSize);
 
-    private double discountPercent(BigDecimal discountValue) {
-        return BigDecimal.valueOf(1).subtract(discountValue).multiply(BigDecimal.valueOf(100)).doubleValue();
+        return new BookPriceItem(book.getId(), DiscountUtil.applyDiscount(book.getPrice(), discount), discount.doubleValue());
     }
 }
