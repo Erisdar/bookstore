@@ -8,3 +8,6 @@ spring:
     user: test
     password: test
     contexts: dev
+springdoc:
+  api-docs:
+    path: /api-docs
