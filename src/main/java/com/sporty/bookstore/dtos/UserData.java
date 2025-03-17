@@ -4,7 +4,7 @@ import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 
-public record UserData (
+public record UserData(
     @NotNull(message = "User name can not be null")
     @NotBlank(message = "User name can not be empty")
     @Size(max = 20, message = "User name can not be longer than 20 symbols")

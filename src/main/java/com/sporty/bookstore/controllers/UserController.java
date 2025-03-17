@@ -29,33 +29,33 @@ public class UserController {
     @GetMapping("/{id}")
     public Mono<User> getUser(@PathVariable Long id) {
         return userRepository.findById(id)
-                .switchIfEmpty(Mono.error(new UserNotFoundException(id)));
+            .switchIfEmpty(Mono.error(new UserNotFoundException(id)));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<User> createUser(@Valid @RequestBody Mono<UserData> userData) {
         return userData
-                .map(userMapper::toEntity)
-                .flatMap(userRepository::save);
+            .map(userMapper::toEntity)
+            .flatMap(userRepository::save);
     }
 
     @PatchMapping("/{id}/balance/add")
     public Mono<User> addBalance(@PathVariable Long id, @Valid @RequestBody Mono<AddBalance> newBalance) {
         return userRepository.findById(id)
-                .switchIfEmpty(Mono.error(new UserNotFoundException(id)))
-                .flatMap(user -> newBalance.map(update -> {
-                    user.setBalance(user.getBalance().add(update.amount()));
-                    return user;
-                }))
-                .flatMap(userRepository::save);
+            .switchIfEmpty(Mono.error(new UserNotFoundException(id)))
+            .flatMap(user -> newBalance.map(update -> {
+                user.setBalance(user.getBalance().add(update.amount()));
+                return user;
+            }))
+            .flatMap(userRepository::save);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public Mono<Void> deleteUser(@PathVariable Long id) {
         return userRepository.findById(id)
-                .switchIfEmpty(Mono.error(new UserNotFoundException(id)))
-                .flatMap(user -> userRepository.deleteById(user.getId()));
+            .switchIfEmpty(Mono.error(new UserNotFoundException(id)))
+            .flatMap(user -> userRepository.deleteById(user.getId()));
     }
 }

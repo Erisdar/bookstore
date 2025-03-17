@@ -12,8 +12,8 @@ public class IsEnumValidator implements ConstraintValidator<IsEnum, CharSequence
     @Override
     public void initialize(IsEnum annotation) {
         acceptedValues = Stream.of(annotation.enumClass().getEnumConstants())
-                .map(Enum::name)
-                .toList();
+            .map(Enum::name)
+            .toList();
     }
 
     @Override

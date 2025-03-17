@@ -20,7 +20,7 @@ public class R2dbcConfig {
     @Bean
     public ConnectionFactoryOptionsBuilderCustomizer enumCodecCustomizer() {
         return builder -> builder.option(Option.valueOf("extensions"), List.of(
-                EnumCodec.builder().withEnum("book_type", BookType.class).build()
+            EnumCodec.builder().withEnum("book_type", BookType.class).build()
         ));
     }
 

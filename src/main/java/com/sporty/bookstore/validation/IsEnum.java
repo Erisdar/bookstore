@@ -16,7 +16,10 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Constraint(validatedBy = IsEnumValidator.class)
 public @interface IsEnum {
     Class<? extends Enum<?>> enumClass();
+
     String message() default "must be correct enum value";
+
     Class<?>[] groups() default {};
+
     Class<? extends Payload>[] payload() default {};
 }

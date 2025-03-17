@@ -29,33 +29,33 @@ public class BookController {
     @GetMapping("/{id}")
     public Mono<Book> getBook(@PathVariable Long id) {
         return bookRepository.findById(id)
-                .switchIfEmpty(Mono.error(new BookNotFoundException(id)));
+            .switchIfEmpty(Mono.error(new BookNotFoundException(id)));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<Book> createBook(@Valid @RequestBody Mono<BookData> bookData) {
         return bookData
-                .map(bookMapper::toEntity)
-                .flatMap(bookRepository::save);
+            .map(bookMapper::toEntity)
+            .flatMap(bookRepository::save);
     }
 
     @PatchMapping("/{id}")
     public Mono<Book> updateBook(@PathVariable Long id, @Valid @RequestBody Mono<BookUpdate> bookUpdate) {
         return bookRepository.findById(id)
-                .switchIfEmpty(Mono.error(new BookNotFoundException(id)))
-                .flatMap(book -> bookUpdate.map( update-> {
-                    bookMapper.updateBookFromDto(update, book);
-                    return book;
-                }))
-                .flatMap(bookRepository::save);
+            .switchIfEmpty(Mono.error(new BookNotFoundException(id)))
+            .flatMap(book -> bookUpdate.map(update -> {
+                bookMapper.updateBookFromDto(update, book);
+                return book;
+            }))
+            .flatMap(bookRepository::save);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public Mono<Void> deleteBook(@PathVariable Long id) {
         return bookRepository.findById(id)
-                .switchIfEmpty(Mono.error(new BookNotFoundException(id)))
-                .flatMap(book -> bookRepository.deleteById(book.getId()));
+            .switchIfEmpty(Mono.error(new BookNotFoundException(id)))
+            .flatMap(book -> bookRepository.deleteById(book.getId()));
     }
 }

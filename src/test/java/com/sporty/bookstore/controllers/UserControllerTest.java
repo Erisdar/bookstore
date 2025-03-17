@@ -47,15 +47,15 @@ class UserControllerTest {
     @AfterEach
     void cleanUpDatabase() {
         postgresTemplate.getDatabaseClient()
-                .sql("TRUNCATE TABLE users RESTART IDENTITY CASCADE")
-                .fetch()
-                .rowsUpdated()
-                .block();
+            .sql("TRUNCATE TABLE users RESTART IDENTITY CASCADE")
+            .fetch()
+            .rowsUpdated()
+            .block();
     }
 
     private static final List<Arguments> validUsers = List.of(
-            arguments("Y", named("1000(Max balance)", BigDecimal.valueOf(1000, 2))),
-            arguments(named("(length=20)", "N".repeat(20)), named("0.01(Min balance)", BigDecimal.valueOf(0.01)))
+        arguments("Y", named("1000(Max balance)", BigDecimal.valueOf(1000, 2))),
+        arguments(named("(length=20)", "N".repeat(20)), named("0.01(Min balance)", BigDecimal.valueOf(0.01)))
     );
 
     @ParameterizedTest
@@ -68,71 +68,71 @@ class UserControllerTest {
         Instant afterCreate = Instant.now();
 
         webTestClient.get().uri("/users/%s".formatted(createdUser.getId()))
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(User.class)
-                .value(user -> {
-                    assertThat(user.getId()).isPositive();
-                    assertThat(user.getName()).isEqualTo(name);
-                    assertThat(user.getBalance()).isEqualTo(balance);
-                    assertThat(user.getLoyalty()).isZero();
-                    assertThat(user.getCreatedAt()).isBetween(beforeCreate, afterCreate);
-                    assertThat(user.getUpdatedAt()).isEqualTo(user.getCreatedAt());
-                    assertThat(user).isEqualTo(createdUser);
-                });
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(User.class)
+            .value(user -> {
+                assertThat(user.getId()).isPositive();
+                assertThat(user.getName()).isEqualTo(name);
+                assertThat(user.getBalance()).isEqualTo(balance);
+                assertThat(user.getLoyalty()).isZero();
+                assertThat(user.getCreatedAt()).isBetween(beforeCreate, afterCreate);
+                assertThat(user.getUpdatedAt()).isEqualTo(user.getCreatedAt());
+                assertThat(user).isEqualTo(createdUser);
+            });
     }
 
     @Test
     void test_create_user_missing_body__bad_request() {
         webTestClient.post().uri("/users")
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody(ErrorResponse.class)
-                .value(errorResponse -> {
-                    assertThat(errorResponse.message()).contains("Invalid or missing request body");
-                    assertThat(errorResponse.errors()).isEmpty();
-                });
+            .exchange()
+            .expectStatus().isBadRequest()
+            .expectBody(ErrorResponse.class)
+            .value(errorResponse -> {
+                assertThat(errorResponse.message()).contains("Invalid or missing request body");
+                assertThat(errorResponse.errors()).isEmpty();
+            });
     }
 
     private static final List<Arguments> invalidNameScenarios = List.of(
-            arguments(null, "User name can not be null"),
-            arguments("", "User name can not be empty"),
-            arguments(named("(length=21)", "T".repeat(21)), "User name can not be longer than 20 symbols")
+        arguments(null, "User name can not be null"),
+        arguments("", "User name can not be empty"),
+        arguments(named("(length=21)", "T".repeat(21)), "User name can not be longer than 20 symbols")
     );
 
     @ParameterizedTest
     @FieldSource("invalidNameScenarios")
     void test_create_user_invalid_name__validation_errors(String name, String error) {
         webTestClient.post().uri("/users")
-                .bodyValue(new UserData(name, BigDecimal.valueOf(100.00)))
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody(ErrorResponse.class)
-                .value(errorResponse -> {
-                    assertThat(errorResponse.message()).isEqualTo("Validation failed for one or more fields");
-                    assertThat(errorResponse.errors()).contains(new FieldError("name", error));
-                });
+            .bodyValue(new UserData(name, BigDecimal.valueOf(100.00)))
+            .exchange()
+            .expectStatus().isBadRequest()
+            .expectBody(ErrorResponse.class)
+            .value(errorResponse -> {
+                assertThat(errorResponse.message()).isEqualTo("Validation failed for one or more fields");
+                assertThat(errorResponse.errors()).contains(new FieldError("name", error));
+            });
     }
 
     private static final List<Arguments> invalidBalanceScenarios = List.of(
-            arguments(BigDecimal.valueOf(-1.00), "User balance must be positive"),
-            arguments(BigDecimal.valueOf(0.00), "User balance must be positive"),
-            arguments(BigDecimal.valueOf(1001.00), "User balance must not exceed 1000"),
-            arguments(BigDecimal.valueOf(100.123), "User balance must have at most 2 decimal places")
+        arguments(BigDecimal.valueOf(-1.00), "User balance must be positive"),
+        arguments(BigDecimal.valueOf(0.00), "User balance must be positive"),
+        arguments(BigDecimal.valueOf(1001.00), "User balance must not exceed 1000"),
+        arguments(BigDecimal.valueOf(100.123), "User balance must have at most 2 decimal places")
     );
 
     @ParameterizedTest
     @FieldSource("invalidBalanceScenarios")
     void test_create_user_invalid_balance__validation_errors(BigDecimal balance, String error) {
         webTestClient.post().uri("/users")
-                .bodyValue(new UserData("Test", balance))
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody(ErrorResponse.class)
-                .value(errorResponse -> {
-                    assertThat(errorResponse.message()).isEqualTo("Validation failed for one or more fields");
-                    assertThat(errorResponse.errors()).contains(new FieldError("balance", error));
-                });
+            .bodyValue(new UserData("Test", balance))
+            .exchange()
+            .expectStatus().isBadRequest()
+            .expectBody(ErrorResponse.class)
+            .value(errorResponse -> {
+                assertThat(errorResponse.message()).isEqualTo("Validation failed for one or more fields");
+                assertThat(errorResponse.errors()).contains(new FieldError("balance", error));
+            });
     }
 
     @Test
@@ -143,29 +143,29 @@ class UserControllerTest {
 
         Instant beforeUpdate = Instant.now();
         User updatedUser = webTestClient.patch().uri("/users/%s/balance/add".formatted(createdUser.getId()))
-                .bodyValue(addBalance)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(User.class)
-                .returnResult()
-                .getResponseBody();
+            .bodyValue(addBalance)
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(User.class)
+            .returnResult()
+            .getResponseBody();
 
         Instant afterUpdate = Instant.now();
 
         assertThat(updatedUser).isNotNull();
 
         webTestClient.get().uri("/users/%s".formatted(createdUser.getId()))
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(User.class)
-                .value(user -> {
-                    assertThat(user.getBalance()).isEqualTo(expectedBalance);
-                    assertThat(user.getUpdatedAt()).isBetween(beforeUpdate, afterUpdate);
-                    assertThat(user.getCreatedAt()).isEqualTo(createdUser.getCreatedAt());
-                    assertThat(user.getName()).isEqualTo(createdUser.getName());
-                    assertThat(user.getLoyalty()).isEqualTo(createdUser.getLoyalty());
-                    assertThat(user).isEqualTo(updatedUser);
-                });
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(User.class)
+            .value(user -> {
+                assertThat(user.getBalance()).isEqualTo(expectedBalance);
+                assertThat(user.getUpdatedAt()).isBetween(beforeUpdate, afterUpdate);
+                assertThat(user.getCreatedAt()).isEqualTo(createdUser.getCreatedAt());
+                assertThat(user.getName()).isEqualTo(createdUser.getName());
+                assertThat(user.getLoyalty()).isEqualTo(createdUser.getLoyalty());
+                assertThat(user).isEqualTo(updatedUser);
+            });
     }
 
     @Test
@@ -174,21 +174,21 @@ class UserControllerTest {
         AddBalance addBalance = new AddBalance(BigDecimal.valueOf(50.00));
 
         webTestClient.patch().uri("/users/%s/balance/add".formatted(nonExistentId))
-                .bodyValue(addBalance)
-                .exchange()
-                .expectStatus().isNotFound()
-                .expectBody(ErrorResponse.class)
-                .value(errorResponse -> {
-                    assertThat(errorResponse.message()).isEqualTo("User with id %d is not found".formatted(nonExistentId));
-                    assertThat(errorResponse.errors()).isEmpty();
-                });
+            .bodyValue(addBalance)
+            .exchange()
+            .expectStatus().isNotFound()
+            .expectBody(ErrorResponse.class)
+            .value(errorResponse -> {
+                assertThat(errorResponse.message()).isEqualTo("User with id %d is not found".formatted(nonExistentId));
+                assertThat(errorResponse.errors()).isEmpty();
+            });
     }
 
     private static final List<Arguments> invalidAmountScenarios = List.of(
-            arguments(BigDecimal.valueOf(-1.00), "Amount must be positive"),
-            arguments(BigDecimal.valueOf(0.00), "Amount must be positive"),
-            arguments(BigDecimal.valueOf(1001.00), "Amount must not exceed 1000"),
-            arguments(BigDecimal.valueOf(100.123), "Amount must have at most 2 decimal places")
+        arguments(BigDecimal.valueOf(-1.00), "Amount must be positive"),
+        arguments(BigDecimal.valueOf(0.00), "Amount must be positive"),
+        arguments(BigDecimal.valueOf(1001.00), "Amount must not exceed 1000"),
+        arguments(BigDecimal.valueOf(100.123), "Amount must have at most 2 decimal places")
     );
 
     @ParameterizedTest
@@ -197,14 +197,14 @@ class UserControllerTest {
         User createdUser = this.createUser(TEST_USER);
 
         webTestClient.patch().uri("/users/%s/balance/add".formatted(createdUser.getId()))
-                .bodyValue(new AddBalance(amount))
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody(ErrorResponse.class)
-                .value(errorResponse -> assertThat(errorResponse).isEqualTo(new ErrorResponse(
-                        "Validation failed for one or more fields",
-                        List.of(new FieldError("amount", error))
-                )));
+            .bodyValue(new AddBalance(amount))
+            .exchange()
+            .expectStatus().isBadRequest()
+            .expectBody(ErrorResponse.class)
+            .value(errorResponse -> assertThat(errorResponse).isEqualTo(new ErrorResponse(
+                "Validation failed for one or more fields",
+                List.of(new FieldError("amount", error))
+            )));
     }
 
     @Test
@@ -212,20 +212,20 @@ class UserControllerTest {
         User createdUser = this.createUser(TEST_USER);
 
         webTestClient.get().uri("/users")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBodyList(User.class)
-                .hasSize(1)
-                .value(users -> assertThat(users.getFirst()).isEqualTo(createdUser));
+            .exchange()
+            .expectStatus().isOk()
+            .expectBodyList(User.class)
+            .hasSize(1)
+            .value(users -> assertThat(users.getFirst()).isEqualTo(createdUser));
     }
 
     @Test
     void test_get_users__empty_list() {
         webTestClient.get().uri("/users")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBodyList(User.class)
-                .hasSize(0);
+            .exchange()
+            .expectStatus().isOk()
+            .expectBodyList(User.class)
+            .hasSize(0);
     }
 
     @Test
@@ -233,10 +233,10 @@ class UserControllerTest {
         User createdUser = this.createUser(TEST_USER);
 
         webTestClient.get().uri("/users/%s".formatted(createdUser.getId()))
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(User.class)
-                .value(user -> assertThat(user).isEqualTo(createdUser));
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(User.class)
+            .value(user -> assertThat(user).isEqualTo(createdUser));
     }
 
     @Test
@@ -244,13 +244,13 @@ class UserControllerTest {
         Long nonExistentId = 10L;
 
         webTestClient.get().uri("/users/%s".formatted(nonExistentId))
-                .exchange()
-                .expectStatus().isNotFound()
-                .expectBody(ErrorResponse.class)
-                .value(errorResponse -> {
-                    assertThat(errorResponse.message()).isEqualTo("User with id %d is not found".formatted(nonExistentId));
-                    assertThat(errorResponse.errors()).isEmpty();
-                });
+            .exchange()
+            .expectStatus().isNotFound()
+            .expectBody(ErrorResponse.class)
+            .value(errorResponse -> {
+                assertThat(errorResponse.message()).isEqualTo("User with id %d is not found".formatted(nonExistentId));
+                assertThat(errorResponse.errors()).isEmpty();
+            });
     }
 
     @Test
@@ -258,29 +258,29 @@ class UserControllerTest {
         User createdUser = this.createUser(TEST_USER);
 
         webTestClient.delete().uri("/users/%s".formatted(createdUser.getId()))
-                .exchange()
-                .expectStatus().isNoContent();
+            .exchange()
+            .expectStatus().isNoContent();
 
         webTestClient.get().uri("/users/%s".formatted(createdUser.getId()))
-                .exchange()
-                .expectStatus().isNotFound()
-                .expectBody(ErrorResponse.class)
-                .value(errorResponse -> {
-                    assertThat(errorResponse.message()).isEqualTo("User with id %d is not found".formatted(createdUser.getId()));
-                    assertThat(errorResponse.errors()).isEmpty();
-                });
+            .exchange()
+            .expectStatus().isNotFound()
+            .expectBody(ErrorResponse.class)
+            .value(errorResponse -> {
+                assertThat(errorResponse.message()).isEqualTo("User with id %d is not found".formatted(createdUser.getId()));
+                assertThat(errorResponse.errors()).isEmpty();
+            });
     }
 
     private User createUser(UserData userData) {
         return webTestClient.post().uri("/users")
-                .bodyValue(userData)
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus().isCreated()
-                .expectHeader().contentType(MediaType.APPLICATION_JSON)
-                .expectBody(User.class)
-                .value(user -> assertThat(user).isNotNull())
-                .returnResult()
-                .getResponseBody();
+            .bodyValue(userData)
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus().isCreated()
+            .expectHeader().contentType(MediaType.APPLICATION_JSON)
+            .expectBody(User.class)
+            .value(user -> assertThat(user).isNotNull())
+            .returnResult()
+            .getResponseBody();
     }
 }

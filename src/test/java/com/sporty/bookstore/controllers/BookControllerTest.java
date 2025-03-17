@@ -47,16 +47,16 @@ public class BookControllerTest {
     @AfterEach
     void cleanUpDatabase() {
         postgresTemplate.getDatabaseClient()
-                .sql("TRUNCATE TABLE books RESTART IDENTITY CASCADE")
-                .fetch()
-                .rowsUpdated()
-                .block();
+            .sql("TRUNCATE TABLE books RESTART IDENTITY CASCADE")
+            .fetch()
+            .rowsUpdated()
+            .block();
     }
 
     private static final List<Arguments> validBooks = List.of(
-            arguments("JS", named("1000(Max price)", BigDecimal.valueOf(1000, 2)), "NEW_RELEASES"),
-            arguments("Java", named("0.01(Min price)", BigDecimal.valueOf(0.01)), "OLD_EDITIONS"),
-            arguments(named("(length=50)", "T".repeat(50)), BigDecimal.valueOf(50.55), "REGULAR")
+        arguments("JS", named("1000(Max price)", BigDecimal.valueOf(1000, 2)), "NEW_RELEASES"),
+        arguments("Java", named("0.01(Min price)", BigDecimal.valueOf(0.01)), "OLD_EDITIONS"),
+        arguments(named("(length=50)", "T".repeat(50)), BigDecimal.valueOf(50.55), "REGULAR")
     );
 
     @ParameterizedTest
@@ -67,39 +67,39 @@ public class BookControllerTest {
         Instant afterCreate = Instant.now();
 
         webTestClient.get().uri("/books/%s".formatted(createdBook.getId()))
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(Book.class)
-                .value(book -> {
-                    assertThat(book.getId()).isPositive();
-                    assertThat(book.getTitle()).isEqualTo(title);
-                    assertThat(book.getPrice()).isEqualTo(price);
-                    assertThat(book.getType().name()).isEqualTo(type);
-                    assertThat(book.getCreatedAt()).isBetween(beforeCreate, afterCreate);
-                    assertThat(book.getUpdatedAt()).isEqualTo(book.getCreatedAt());
-                    assertThat(book).isEqualTo(createdBook);
-                });
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(Book.class)
+            .value(book -> {
+                assertThat(book.getId()).isPositive();
+                assertThat(book.getTitle()).isEqualTo(title);
+                assertThat(book.getPrice()).isEqualTo(price);
+                assertThat(book.getType().name()).isEqualTo(type);
+                assertThat(book.getCreatedAt()).isBetween(beforeCreate, afterCreate);
+                assertThat(book.getUpdatedAt()).isEqualTo(book.getCreatedAt());
+                assertThat(book).isEqualTo(createdBook);
+            });
     }
 
     @Test
     void test_create_book_missing_body__bad_request() {
         webTestClient.post().uri("/books")
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody(ErrorResponse.class)
-                .value(errorResponse -> {
-                    assertThat(errorResponse.message()).contains("Invalid or missing request body");
-                    assertThat(errorResponse.errors()).isEmpty();
-                });
+            .exchange()
+            .expectStatus().isBadRequest()
+            .expectBody(ErrorResponse.class)
+            .value(errorResponse -> {
+                assertThat(errorResponse.message()).contains("Invalid or missing request body");
+                assertThat(errorResponse.errors()).isEmpty();
+            });
     }
 
     private static final List<Arguments> nullTitleScenarios = List.of(
-            arguments(null, "Book title can not be null")
+        arguments(null, "Book title can not be null")
     );
 
     private static final List<Arguments> invalidTitleScenarios = List.of(
-            arguments("a", "Book title must be between 2 and 50 characters long"),
-            arguments(named("a(length=51)", "a".repeat(51)), "Book title must be between 2 and 50 characters long")
+        arguments("a", "Book title must be between 2 and 50 characters long"),
+        arguments(named("a(length=51)", "a".repeat(51)), "Book title must be between 2 and 50 characters long")
     );
 
     @ParameterizedTest
@@ -107,25 +107,25 @@ public class BookControllerTest {
     @FieldSource("invalidTitleScenarios")
     void test_create_book_invalid_title__validation_errors(String title, String error) {
         webTestClient.post().uri("/books")
-                .bodyValue(new BookData(title, TEST_BOOK.price(), TEST_BOOK.type()))
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody(ErrorResponse.class)
-                .value(errorResponse -> {
-                    assertThat(errorResponse.message()).isEqualTo("Validation failed for one or more fields");
-                    assertThat(errorResponse.errors()).contains(new FieldError("title", error));
-                });
+            .bodyValue(new BookData(title, TEST_BOOK.price(), TEST_BOOK.type()))
+            .exchange()
+            .expectStatus().isBadRequest()
+            .expectBody(ErrorResponse.class)
+            .value(errorResponse -> {
+                assertThat(errorResponse.message()).isEqualTo("Validation failed for one or more fields");
+                assertThat(errorResponse.errors()).contains(new FieldError("title", error));
+            });
     }
 
     private static final List<Arguments> nullPriceScenarios = List.of(
-            arguments(null, "Book price can not be null")
+        arguments(null, "Book price can not be null")
     );
 
     private static final List<Arguments> invalidPriceScenarios = List.of(
-            arguments(BigDecimal.valueOf(-1.00), "Book price must be positive"),
-            arguments(BigDecimal.valueOf(0.00), "Book price must be positive"),
-            arguments(BigDecimal.valueOf(1001.00), "Book price must not exceed 1000"),
-            arguments(BigDecimal.valueOf(100.123), "Book price must have at most 2 decimal places")
+        arguments(BigDecimal.valueOf(-1.00), "Book price must be positive"),
+        arguments(BigDecimal.valueOf(0.00), "Book price must be positive"),
+        arguments(BigDecimal.valueOf(1001.00), "Book price must not exceed 1000"),
+        arguments(BigDecimal.valueOf(100.123), "Book price must have at most 2 decimal places")
     );
 
     @ParameterizedTest
@@ -133,22 +133,22 @@ public class BookControllerTest {
     @FieldSource("invalidPriceScenarios")
     void test_create_book_invalid_price__validation_errors(BigDecimal price, String error) {
         webTestClient.post().uri("/books")
-                .bodyValue(new BookData(TEST_BOOK.title(), price, TEST_BOOK.type()))
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody(ErrorResponse.class)
-                .value(errorResponse -> {
-                    assertThat(errorResponse.message()).isEqualTo("Validation failed for one or more fields");
-                    assertThat(errorResponse.errors()).contains(new FieldError("price", error));
-                });
+            .bodyValue(new BookData(TEST_BOOK.title(), price, TEST_BOOK.type()))
+            .exchange()
+            .expectStatus().isBadRequest()
+            .expectBody(ErrorResponse.class)
+            .value(errorResponse -> {
+                assertThat(errorResponse.message()).isEqualTo("Validation failed for one or more fields");
+                assertThat(errorResponse.errors()).contains(new FieldError("price", error));
+            });
     }
 
     private static final List<Arguments> nullTypeScenarios = List.of(
-            arguments(null, "Book type can not be null")
+        arguments(null, "Book type can not be null")
     );
 
     private static final List<Arguments> invalidTypeScenarios = List.of(
-            arguments("INVALID_TYPE", "Book type must be valid enum value")
+        arguments("INVALID_TYPE", "Book type must be valid enum value")
     );
 
     @ParameterizedTest
@@ -156,14 +156,14 @@ public class BookControllerTest {
     @FieldSource("invalidTypeScenarios")
     void test_create_book_invalid_type__validation_errors(String type, String error) {
         webTestClient.post().uri("/books")
-                .bodyValue(new BookData(TEST_BOOK.title(), TEST_BOOK.price(), type))
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody(ErrorResponse.class)
-                .value(errorResponse -> {
-                    assertThat(errorResponse.message()).isEqualTo("Validation failed for one or more fields");
-                    assertThat(errorResponse.errors()).contains(new FieldError("type", error));
-                });
+            .bodyValue(new BookData(TEST_BOOK.title(), TEST_BOOK.price(), type))
+            .exchange()
+            .expectStatus().isBadRequest()
+            .expectBody(ErrorResponse.class)
+            .value(errorResponse -> {
+                assertThat(errorResponse.message()).isEqualTo("Validation failed for one or more fields");
+                assertThat(errorResponse.errors()).contains(new FieldError("type", error));
+            });
     }
 
     @ParameterizedTest
@@ -174,28 +174,28 @@ public class BookControllerTest {
 
         Instant beforeUpdate = Instant.now();
         Book updatedBook = webTestClient.patch().uri("/books/%s".formatted(createdBook.getId()))
-                .bodyValue(bookUpdate)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(Book.class)
-                .value(book -> assertThat(book).isNotNull())
-                .returnResult()
-                .getResponseBody();
+            .bodyValue(bookUpdate)
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(Book.class)
+            .value(book -> assertThat(book).isNotNull())
+            .returnResult()
+            .getResponseBody();
 
         Instant afterUpdate = Instant.now();
 
         webTestClient.get().uri("/books/%s".formatted(createdBook.getId()))
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(Book.class)
-                .value(book -> {
-                    assertThat(book.getTitle()).isEqualTo(bookUpdate.title());
-                    assertThat(book.getPrice()).isEqualTo(bookUpdate.price());
-                    assertThat(book.getType().name()).isEqualTo(bookUpdate.type());
-                    assertThat(book.getUpdatedAt()).isBetween(beforeUpdate, afterUpdate);
-                    assertThat(book.getCreatedAt()).isEqualTo(createdBook.getCreatedAt());
-                    assertThat(book).isEqualTo(updatedBook);
-                });
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(Book.class)
+            .value(book -> {
+                assertThat(book.getTitle()).isEqualTo(bookUpdate.title());
+                assertThat(book.getPrice()).isEqualTo(bookUpdate.price());
+                assertThat(book.getType().name()).isEqualTo(bookUpdate.type());
+                assertThat(book.getUpdatedAt()).isBetween(beforeUpdate, afterUpdate);
+                assertThat(book.getCreatedAt()).isEqualTo(createdBook.getCreatedAt());
+                assertThat(book).isEqualTo(updatedBook);
+            });
     }
 
     @Test
@@ -205,28 +205,28 @@ public class BookControllerTest {
 
         Instant beforeUpdate = Instant.now();
         Book updatedBook = webTestClient.patch().uri("/books/%s".formatted(createdBook.getId()))
-                .bodyValue(bookUpdate)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(Book.class)
-                .value(book -> assertThat(book).isNotNull())
-                .returnResult()
-                .getResponseBody();
+            .bodyValue(bookUpdate)
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(Book.class)
+            .value(book -> assertThat(book).isNotNull())
+            .returnResult()
+            .getResponseBody();
 
         Instant afterUpdate = Instant.now();
 
         webTestClient.get().uri("/books/%s".formatted(createdBook.getId()))
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(Book.class)
-                .value(book -> {
-                    assertThat(book.getTitle()).isEqualTo(createdBook.getTitle());
-                    assertThat(book.getPrice()).isEqualTo(createdBook.getPrice());
-                    assertThat(book.getType()).isEqualTo(createdBook.getType());
-                    assertThat(book.getUpdatedAt()).isBetween(beforeUpdate, afterUpdate);
-                    assertThat(book.getCreatedAt()).isEqualTo(createdBook.getCreatedAt());
-                    assertThat(book).isEqualTo(updatedBook);
-                });
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(Book.class)
+            .value(book -> {
+                assertThat(book.getTitle()).isEqualTo(createdBook.getTitle());
+                assertThat(book.getPrice()).isEqualTo(createdBook.getPrice());
+                assertThat(book.getType()).isEqualTo(createdBook.getType());
+                assertThat(book.getUpdatedAt()).isBetween(beforeUpdate, afterUpdate);
+                assertThat(book.getCreatedAt()).isEqualTo(createdBook.getCreatedAt());
+                assertThat(book).isEqualTo(updatedBook);
+            });
     }
 
     @Test
@@ -235,14 +235,14 @@ public class BookControllerTest {
         BookUpdate bookUpdate = new BookUpdate(TEST_BOOK.title(), null, null);
 
         webTestClient.patch().uri("/books/%s".formatted(nonExistentId))
-                .bodyValue(bookUpdate)
-                .exchange()
-                .expectStatus().isNotFound()
-                .expectBody(ErrorResponse.class)
-                .value(errorResponse -> {
-                    assertThat(errorResponse.message()).isEqualTo("Book with id %d is not found".formatted(nonExistentId));
-                    assertThat(errorResponse.errors()).isEmpty();
-                });
+            .bodyValue(bookUpdate)
+            .exchange()
+            .expectStatus().isNotFound()
+            .expectBody(ErrorResponse.class)
+            .value(errorResponse -> {
+                assertThat(errorResponse.message()).isEqualTo("Book with id %d is not found".formatted(nonExistentId));
+                assertThat(errorResponse.errors()).isEmpty();
+            });
     }
 
     @ParameterizedTest
@@ -251,14 +251,14 @@ public class BookControllerTest {
         Book createdBook = this.createBook(TEST_BOOK);
 
         webTestClient.patch().uri("/books/%s".formatted(createdBook.getId()))
-                .bodyValue(new BookUpdate(title, null, null))
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody(ErrorResponse.class)
-                .value(errorResponse -> {
-                    assertThat(errorResponse.message()).isEqualTo("Validation failed for one or more fields");
-                    assertThat(errorResponse.errors()).contains(new FieldError("title", error));
-                });
+            .bodyValue(new BookUpdate(title, null, null))
+            .exchange()
+            .expectStatus().isBadRequest()
+            .expectBody(ErrorResponse.class)
+            .value(errorResponse -> {
+                assertThat(errorResponse.message()).isEqualTo("Validation failed for one or more fields");
+                assertThat(errorResponse.errors()).contains(new FieldError("title", error));
+            });
     }
 
     @ParameterizedTest
@@ -267,14 +267,14 @@ public class BookControllerTest {
         Book createdBook = this.createBook(TEST_BOOK);
 
         webTestClient.patch().uri("/books/%s".formatted(createdBook.getId()))
-                .bodyValue(new BookUpdate(null, price, null))
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody(ErrorResponse.class)
-                .value(errorResponse -> {
-                    assertThat(errorResponse.message()).isEqualTo("Validation failed for one or more fields");
-                    assertThat(errorResponse.errors()).contains(new FieldError("price", error));
-                });
+            .bodyValue(new BookUpdate(null, price, null))
+            .exchange()
+            .expectStatus().isBadRequest()
+            .expectBody(ErrorResponse.class)
+            .value(errorResponse -> {
+                assertThat(errorResponse.message()).isEqualTo("Validation failed for one or more fields");
+                assertThat(errorResponse.errors()).contains(new FieldError("price", error));
+            });
     }
 
     @ParameterizedTest
@@ -283,14 +283,14 @@ public class BookControllerTest {
         Book createdBook = this.createBook(TEST_BOOK);
 
         webTestClient.patch().uri("/books/%s".formatted(createdBook.getId()))
-                .bodyValue(new BookUpdate(null, null, type))
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody(ErrorResponse.class)
-                .value(errorResponse -> {
-                    assertThat(errorResponse.message()).isEqualTo("Validation failed for one or more fields");
-                    assertThat(errorResponse.errors()).contains(new FieldError("type", error));
-                });
+            .bodyValue(new BookUpdate(null, null, type))
+            .exchange()
+            .expectStatus().isBadRequest()
+            .expectBody(ErrorResponse.class)
+            .value(errorResponse -> {
+                assertThat(errorResponse.message()).isEqualTo("Validation failed for one or more fields");
+                assertThat(errorResponse.errors()).contains(new FieldError("type", error));
+            });
     }
 
     @Test
@@ -298,20 +298,20 @@ public class BookControllerTest {
         Book createdBook = this.createBook(TEST_BOOK);
 
         webTestClient.get().uri("/books")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBodyList(Book.class)
-                .hasSize(1)
-                .value(books -> assertThat(books.getFirst()).isEqualTo(createdBook));
+            .exchange()
+            .expectStatus().isOk()
+            .expectBodyList(Book.class)
+            .hasSize(1)
+            .value(books -> assertThat(books.getFirst()).isEqualTo(createdBook));
     }
 
     @Test
     void test_get_books__empty_list() {
         webTestClient.get().uri("/books")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBodyList(Book.class)
-                .value(books -> assertThat(books).isEmpty());
+            .exchange()
+            .expectStatus().isOk()
+            .expectBodyList(Book.class)
+            .value(books -> assertThat(books).isEmpty());
     }
 
     @Test
@@ -319,10 +319,10 @@ public class BookControllerTest {
         Book createdBook = this.createBook(TEST_BOOK);
 
         webTestClient.get().uri("/books/%s".formatted(createdBook.getId()))
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(Book.class)
-                .value(book -> assertThat(book).isEqualTo(createdBook));
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(Book.class)
+            .value(book -> assertThat(book).isEqualTo(createdBook));
     }
 
     @Test
@@ -330,13 +330,13 @@ public class BookControllerTest {
         Long nonExistentId = 10L;
 
         webTestClient.get().uri("/books/%s".formatted(nonExistentId))
-                .exchange()
-                .expectStatus().isNotFound()
-                .expectBody(ErrorResponse.class)
-                .value(errorResponse -> {
-                    assertThat(errorResponse.message()).isEqualTo("Book with id %d is not found".formatted(nonExistentId));
-                    assertThat(errorResponse.errors()).isEmpty();
-                });
+            .exchange()
+            .expectStatus().isNotFound()
+            .expectBody(ErrorResponse.class)
+            .value(errorResponse -> {
+                assertThat(errorResponse.message()).isEqualTo("Book with id %d is not found".formatted(nonExistentId));
+                assertThat(errorResponse.errors()).isEmpty();
+            });
     }
 
     @Test
@@ -344,29 +344,29 @@ public class BookControllerTest {
         Book createdBook = this.createBook(TEST_BOOK);
 
         webTestClient.delete().uri("/books/%s".formatted(createdBook.getId()))
-                .exchange()
-                .expectStatus().isNoContent();
+            .exchange()
+            .expectStatus().isNoContent();
 
         webTestClient.get().uri("/books/%s".formatted(createdBook.getId()))
-                .exchange()
-                .expectStatus().isNotFound()
-                .expectBody(ErrorResponse.class)
-                .value(errorResponse -> {
-                    assertThat(errorResponse.message()).isEqualTo("Book with id %d is not found".formatted(createdBook.getId()));
-                    assertThat(errorResponse.errors()).isEmpty();
-                });
+            .exchange()
+            .expectStatus().isNotFound()
+            .expectBody(ErrorResponse.class)
+            .value(errorResponse -> {
+                assertThat(errorResponse.message()).isEqualTo("Book with id %d is not found".formatted(createdBook.getId()));
+                assertThat(errorResponse.errors()).isEmpty();
+            });
     }
 
     private Book createBook(BookData bookData) {
         return webTestClient.post().uri("/books")
-                .bodyValue(bookData)
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus().isCreated()
-                .expectHeader().contentType(MediaType.APPLICATION_JSON)
-                .expectBody(Book.class)
-                .value(book -> assertThat(book).isNotNull())
-                .returnResult()
-                .getResponseBody();
+            .bodyValue(bookData)
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus().isCreated()
+            .expectHeader().contentType(MediaType.APPLICATION_JSON)
+            .expectBody(Book.class)
+            .value(book -> assertThat(book).isNotNull())
+            .returnResult()
+            .getResponseBody();
     }
 }
