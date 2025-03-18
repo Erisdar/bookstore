@@ -107,7 +107,7 @@ public class OrderService {
             .orElse(null);
 
         if (loyaltyBookType == null && orderDetails.loyaltyBookId() != null) {
-            return Mono.error(new BookNotFoundException(orderDetails.loyaltyBookId()));
+            return Mono.error(new LoyaltyNotAcceptableException(orderDetails.loyaltyBookId()));
         }
 
         if (BookType.NEW_RELEASES.equals(loyaltyBookType)) {

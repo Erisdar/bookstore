@@ -504,6 +504,36 @@ public class OrderControllerTest {
     }
 
     @Test
+    void test_create_order_with_incorrect_loyalty_book__bad_request_error() {
+        OrderDetails orderDetails = new OrderDetails(
+            user.getId(),
+            oldEditionBook.getId(),
+            List.of(
+                new BookItem(newReleaseBook.getId(), 1)
+            )
+        );
+
+        addUserLoyalty(user.getId());
+
+        webTestClient.post().uri("/orders")
+            .bodyValue(orderDetails)
+            .exchange()
+            .expectStatus().isBadRequest()
+            .expectBody(ErrorResponse.class)
+            .value(errorResponse -> {
+                assertThat(errorResponse.message())
+                    .isEqualTo("Loyalty book with id %s is not included in the order.".formatted(oldEditionBook.getId()));
+            });
+
+        var updatedUser = getUser(user.getId());
+        var orders = getOrders();
+
+        assertThat(orders).isEmpty();
+        assertThat(updatedUser.getBalance()).isEqualTo(user.getBalance());
+        assertThat(updatedUser.getLoyalty()).isEqualTo(10);
+    }
+
+    @Test
     void test_create_order_with_insufficient_loyalty__bad_request_error() {
         OrderDetails orderDetails = new OrderDetails(
             user.getId(),
