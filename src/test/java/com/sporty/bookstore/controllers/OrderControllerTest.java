@@ -190,29 +190,6 @@ public class OrderControllerTest {
             });
     }
 
-    @Test
-    void test_create_order__adds_loyalty_points() {
-        assertThat(user.getLoyalty()).isEqualTo(0);
-
-        OrderDetails orderDetails = new OrderDetails(
-            user.getId(),
-            null,
-            List.of(
-                new BookItem(newReleaseBook.getId(), 1),
-                new BookItem(oldEditionBook.getId(), 1),
-                new BookItem(regularBook.getId(), 2)
-            )
-        );
-
-        webTestClient.post().uri("/orders")
-            .bodyValue(orderDetails)
-            .exchange()
-            .expectStatus().isCreated();
-
-        User updatedUser = getUser(user.getId());
-        assertThat(updatedUser.getLoyalty()).isEqualTo(4);
-    }
-
     private static final List<Arguments> invalidUserIdScenarios = List.of(
         arguments(null, "User id can not be null"),
         arguments(0L, "User id must be positive"),
@@ -473,6 +450,29 @@ public class OrderControllerTest {
         assertThat(orders).hasSize(1);
         assertThat(updatedUser.getBalance()).isEqualTo(user.getBalance());
         assertThat(updatedUser.getLoyalty()).isEqualTo(0);
+    }
+
+    @Test
+    void test_create_order__adds_loyalty_points() {
+        assertThat(user.getLoyalty()).isEqualTo(0);
+
+        OrderDetails orderDetails = new OrderDetails(
+            user.getId(),
+            null,
+            List.of(
+                new BookItem(newReleaseBook.getId(), 1),
+                new BookItem(oldEditionBook.getId(), 1),
+                new BookItem(regularBook.getId(), 2)
+            )
+        );
+
+        webTestClient.post().uri("/orders")
+            .bodyValue(orderDetails)
+            .exchange()
+            .expectStatus().isCreated();
+
+        User updatedUser = getUser(user.getId());
+        assertThat(updatedUser.getLoyalty()).isEqualTo(4);
     }
 
     @Test
