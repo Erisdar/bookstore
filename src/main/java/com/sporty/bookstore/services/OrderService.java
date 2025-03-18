@@ -45,7 +45,7 @@ public class OrderService {
         Mono<OrderDetails> cachedOrderDetails = orderDetails.cache();
         return this.getOrderPriceInfo(cachedOrderDetails)
             .zipWith(cachedOrderDetails)
-            .flatMap(this::deductUserBalance)
+            .flatMap(this::processUserBalanceAndLoyalty)
             .flatMap(this::saveOrderWithItems);
     }
 
@@ -116,9 +116,10 @@ public class OrderService {
         return Mono.just(booksMap);
     }
 
-    private Mono<OrderPriceInfo> deductUserBalance(Tuple2<OrderPriceInfo, OrderDetails> orderInfoTuple) {
+    private Mono<OrderPriceInfo> processUserBalanceAndLoyalty(Tuple2<OrderPriceInfo, OrderDetails> orderInfoTuple) {
         var orderPriceInfo = orderInfoTuple.getT1();
         var orderDetails = orderInfoTuple.getT2();
+        var totalBooks = orderPriceInfo.items().size();
 
         return userRepository.findById(orderPriceInfo.userId())
             .switchIfEmpty(Mono.error(new UserNotFoundException(orderPriceInfo.userId())))
@@ -126,9 +127,12 @@ public class OrderService {
                 if (user.getBalance().compareTo(orderPriceInfo.totalPrice()) < 0) {
                     return Mono.error(new InsufficientBalanceException());
                 }
-                if (orderDetails.loyaltyBookId() != null && user.getLoyalty() >= 10) {
-                    user.setLoyalty(0);
-                }
+
+                var loyalty = (orderDetails.loyaltyBookId() != null && user.getLoyalty() >= 10)
+                    ? 0
+                    : user.getLoyalty() + totalBooks;
+
+                user.setLoyalty(loyalty);
                 user.setBalance(user.getBalance().subtract(orderPriceInfo.totalPrice()));
                 return userRepository.save(user)
                     .thenReturn(orderPriceInfo);
