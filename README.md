@@ -35,6 +35,8 @@ Navigate url: http://localhost:8080/swagger-ui/index.html
 2. Utilized R2DBC driver for non-blocking database operations to improve scalability. 
 3. Used BigDecimal for price and balance calculations to avoid floating-point precision issues.
 4. Added automatic creation of 20 sample books in local environments for testing convenience.
+5. Discount applied based on total number of books in order.
+6. If user apply loyalty we will not add additional loyalty points.
 
 ### Future improvements
 1. Configure CORS settings for production deployment.
